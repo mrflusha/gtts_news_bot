@@ -35,4 +35,4 @@ for i, arr in enumerate(test):
 	tts.save(str(i)+".mp3")
 
 
-	playsound(str(i)+'.mp3')
+	#playsound(str(i)+'.mp3')
