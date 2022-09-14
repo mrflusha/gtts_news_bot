@@ -1,99 +1,68 @@
-from gtts import gTTS
-from time import sleep
-import parse
-from playsound import playsound
+from bs4 import BeautifulSoup
+import requests
 
-from datetime import datetime
-from time import sleep
+url = ("https://ria.ru/")
+user_agent = {"User-Agent": "Mozilla/5.0 (iPhone; U; CPU iPhone OS 4_3_2 like Mac OS X; nl-nl) AppleWebKit/533.17.9 (KHTML, like Gecko) Version/5.0.2 Mobile/8H7 Safari/6533.18.5"}
+page = requests.get(url, headers=user_agent)
 
-
-import time
-import google.cloud.texttospeech as tts
-
-
-
-
-#tts = gTTS(text='МОСКВА, 1 апр - РИА Новости. Президент России Владимир Путин проведет в пятницу оперативное совещание с постоянными членами Совбеза РФ, а также международные телефонные разговоры, в том числе с турецким лидером Тайипом Эрдоганом, сообщил журналистам пресс-секретарь главы государства Дмитрий Песков.\"Сегодня у Путина несколько международных телефонных разговоров, продолжает диалог. Один из них будет разговор с Эрдоганом, мы это подтверждаем. Сообщение дадим... В середине дня президент планирует провести оперативное совещание с членами Совбеза\", - сказал Песков журналистам.', lang='ru')
-#tts.save("good.mp3")
-#playsound('good.mp3')
-class Speaker:
-	def __init__ (self, speaker = 'aidar',):
-		self.lang = 'ru'
-		self.model = 'ru_v3'
-		self.sample_rate = '24000'
-		self.speaker = speaker
-		self.put_accent = True 
-		self.device = torch.device('cpu')
-		self.model, self._ = torch.hub.load(repo_or_dir='snakers4/silero-models',
-                                     model='silero_tts',
-                                     language=language,
-                                     speaker=model_id)
-
-
-class News:
-	news_list = list()
-	def __init__ (self, title, link, full_text, resource = 'ria'):
-		self.resource = resource
-		self.title = title 
-		self.link = link
-		self.full_text = full_text
-		self.news_list.append(self)
-
-
-	def get_full_text(self):
-		return self.full_text
-
-
-text_list = ['И вот мы сидим сдесь, как два вайтишника, вайтишно сидим.',
-'Ты баги то фиксишь? -фикшу! ',
-'Братишка, братишка просыпайся. :censored: всё положили, rm -rf \/написали :censored:'
-, 'Вот это таска, вот это да. '
-,
-'Снимаем логи... -стоит у меня дебаг бридж, стоит. '
-,
-'Один отчёт :censored: другого'
-,
-'Где он критикал то? Где он критикал... '
-,
-'-я тимлид пойдём на митап'
-,
-'Натестировали :censored:']
-
-now = datetime.now()
-
-current_time = now.strftime("%H:%M")
-
-time_to_parse = "23:00"
-
-'''
-
-test = parse.get_full_text("https://realty.ria.ru/20220621/putin-1797051961.html")
-print(test)
-
-tts = gTTS(text = test, lang='ru')
-tts.save("путлер.mp3")
-playsound("путлер.mp3")
-sleep(20)
-'''
-test = parse.get_docs()
-
-for i, arr in enumerate(test):
-	print(type(arr))
-
-
-	sleep(30)
-	full_text = parse.get_full_text(arr[1])
-	News(arr[0],arr[1],full_text)
-	print(i,News.news_list[i].title,News.news_list[i].link,News.news_list[i].full_text, sep = '\t')
-
-	tts = gTTS(text = full_text, lang = 'ru')
-	tts.save(f"ria{i}.mp3")
-	playsound(f"ria{i}.mp3")
-
-	#tts = gTTS(text = arr[0], lang='ru')
-
-	#tts.save("new_"+str(i)+".mp3")
-	#playsound("new_"+str(i)+".mp3")
-
-
+print(page.status_code)
+def get_docs():
 	
+	try:
+
+		if page.status_code == 200:
+			filterNews = list()
+			allNews = list()
+			soup = BeautifulSoup(page.text, "html.parser")
+			allNews = soup.findAll('a', class_='cell-list__item-link')
+			photoNews = soup.findAll('a', class_='cell-main-photo__link')
+
+			#print(photoNews)
+			#print(allNews[1])
+			for data in allNews:		
+				if data.find('span') is not None:
+					temp_list = [data.text.strip("\"\'\/\#") ,data['href']]
+					filterNews.append(temp_list)
+			#print(temp_list)
+
+			for data in photoNews:
+				if data.find('span') is not None:
+					temp_list = [data.text.strip("\"\'\/\#") ,data['href']]
+					filterNews.append(temp_list)
+			#print(temp_list)
+	#				if data.has_attr('href'):
+	#					print(data['href'])
+					#print(data.find("href"))
+
+			return filterNews
+		else:
+			print(f"error connect to site,\n site return {page.status_code}")
+		
+	except Exception as e:
+		print(e)
+
+def get_full_text(link):
+	tts = requests.get(link, headers=user_agent)
+	if page.status_code == 200:
+			tts_list = list()
+			soup = BeautifulSoup(tts.text, "html.parser")
+			html_tts = soup.findAll('div',class_='article__text')
+			
+			for data in html_tts:
+				tts_list.append(data.text)
+			
+			tts = " ".join(map(str,tts_list))
+			return tts
+
+	else:
+		print(f"error connect to site,\n site return {page.status_code}")
+
+
+
+
+	return text_to_speech
+	
+#test = get_docs()
+
+#for text, link in test:
+#	print(f"text = {text}\n link = {link}\n\n")
